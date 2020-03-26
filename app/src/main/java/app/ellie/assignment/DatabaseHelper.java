@@ -45,10 +45,43 @@ public class DatabaseHelper extends SQLiteOpenHelper {
        return db.insert(TABLENAME, null, records);
     }
 
+    public long updateData (Integer id, String name, String pass, String email){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues records = new ContentValues();
+        records.put(COL1, name);
+        records.put(COL2, pass);
+        records.put(COL3, email);
+
+        return db.update(TABLENAME, records, "id =?", new String[]{String.valueOf(id)});
+    }
+
     public Cursor ReadData(){
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor dataToRead = db.rawQuery("SELECT * FROM " + TABLENAME, null);
         return dataToRead;
 
+    }
+
+    public Cursor deleteRow(int value)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DELETE FROM " + TABLENAME+ " WHERE "+COL0+"='"+value+"'");
+        db.close();
+        return null;
+    }
+
+
+    public void updateData(int Id, String name, String password, String email){
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues records = new ContentValues();
+
+        records.put(COL1, name);
+        records.put(COL2, password);
+        records.put(COL3, email);
+
+        String whereClause = "id=?";
+        String whereArgs[] = new String[]{String.valueOf(Id)};
+
+        db.update(TABLENAME, records, whereClause, whereArgs);
     }
 }

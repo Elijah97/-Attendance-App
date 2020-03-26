@@ -23,12 +23,11 @@ import java.util.List;
 import static app.ellie.assignment.MainActivity.fragmentManager;
 
 
-
-public class SaveFragment extends Fragment  implements AdapterView.OnItemSelectedListener{
+public class SaveFragment extends Fragment implements AdapterView.OnItemSelectedListener {
     private final String EMAIL_PATTERN = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
     DatabaseHelper mydb;
-    EditText sName, password, email;
-    private Button button, save, viewBtn;
+    EditText sName, password, email, deleteText, id;
+    private Button button, save, viewBtn, deleteBtn;
     private Spinner spinner1, spinner2;
     private DatabaseHelper db;
     private boolean isValid = true;
@@ -43,16 +42,21 @@ public class SaveFragment extends Fragment  implements AdapterView.OnItemSelecte
         final View view = inflater.inflate(R.layout.fragment_save, container, false);
 
 
-
         mydb = new DatabaseHelper(getContext());
         button = view.findViewById(R.id.save);
         viewBtn = view.findViewById(R.id.readBtn);
+        deleteBtn = view.findViewById(R.id.deleteBtn);
         ReadData();
 
         sName = view.findViewById(R.id.name);
+        id = view.findViewById(R.id.id);
         password = view.findViewById(R.id.password);
         email = view.findViewById(R.id.email);
+        deleteText = view.findViewById(R.id.idNum);
         db = new DatabaseHelper(getContext());
+
+
+        DeleteData();
 
 
         Spinner session = view.findViewById(R.id.session_spinner);
@@ -110,22 +114,31 @@ public class SaveFragment extends Fragment  implements AdapterView.OnItemSelecte
         if (!isValid) return;
 
         //SAVE IN THE DATABASE
-        if (db.insertData(name, password, email)!=-1) {
-            FragmentTransaction ft = fragmentManager.beginTransaction();
-            SuccessFragment fragment = new SuccessFragment();
-            final Bundle args = new Bundle();
-            args.putString(SuccessFragment.NAME_PARAM,name);
-            args.putString(SuccessFragment.EMAIL_PARAM,email);
-            args.putString(SuccessFragment.PASSWORD_PARAM,password);
-            fragment.setArguments(args);
-            ft.replace(R.id.FragmentContainer, fragment, null)
-                    .addToBackStack(null)
-                    .commit();
-            Toast.makeText(getContext(), "saved successfully", Toast.LENGTH_SHORT).show();
-        }else {
-            Toast.makeText(getContext(), "they was an issue", Toast.LENGTH_SHORT).show();
-            return;
+        if (id.getText().toString().isEmpty()) {
+            if (db.insertData(name, password, email) != -1) {
+                FragmentTransaction ft = fragmentManager.beginTransaction();
+                SuccessFragment fragment = new SuccessFragment();
+                final Bundle args = new Bundle();
+                args.putString(SuccessFragment.NAME_PARAM, name);
+                args.putString(SuccessFragment.EMAIL_PARAM, email);
+                args.putString(SuccessFragment.PASSWORD_PARAM, password);
+                fragment.setArguments(args);
+                ft.replace(R.id.FragmentContainer, fragment, null)
+                        .addToBackStack(null)
+                        .commit();
+                Toast.makeText(getContext(), "saved successfully", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(getContext(), "they was an issue", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        } else {
+            Integer id = Integer.valueOf(this.id.getText().toString());
+
+            db.updateData(id, name, password, email);
+            Toast.makeText(getContext(), "Data updated successfully", Toast.LENGTH_SHORT).show();
         }
+
+
     }
 
     @Override
@@ -137,32 +150,44 @@ public class SaveFragment extends Fragment  implements AdapterView.OnItemSelecte
     public void onNothingSelected(AdapterView<?> parent) {
 
     }
-    public void ReadData(){
+
+    public void ReadData() {
         viewBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Cursor results = mydb.ReadData();
-                if (results.getCount() == 0){
+                if (results.getCount() == 0) {
                     showMessage("Error", "Nothing to show");
                 }
                 StringBuffer sb = new StringBuffer();
-                while (results.moveToNext()){
-                    sb.append("ReadNo : "+ results.getString(0) + "\n" );
-                    sb.append("Name : "+ results.getString(1) + "\n" );
-                    sb.append("Password : "+ results.getString(2) + "\n" );
-                    sb.append("Email : "+ results.getString(3) + "\n\n" );
+                while (results.moveToNext()) {
+                    sb.append("ReadNo : " + results.getString(0) + "\n");
+                    sb.append("Name : " + results.getString(1) + "\n");
+                    sb.append("Password : " + results.getString(2) + "\n");
+                    sb.append("Email : " + results.getString(3) + "\n\n");
                 }
                 showMessage("Students Record", sb.toString());
             }
         });
     }
 
-    public void showMessage(String title, String message){
+    public void showMessage(String title, String message) {
         AlertDialog.Builder builder = new AlertDialog.Builder((getActivity()));
         builder.setCancelable(true);
         builder.setTitle(title);
         builder.setMessage(message);
         builder.show();
     }
+
+    public void DeleteData() {
+        deleteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Cursor results = mydb.deleteRow(Integer.parseInt(deleteText.getText().toString()));
+                Toast.makeText(getContext(), "Data delete successfully", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
 
 }
