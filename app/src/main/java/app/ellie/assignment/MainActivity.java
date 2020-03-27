@@ -1,5 +1,6 @@
 package app.ellie.assignment;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,7 +17,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        fragmentManager =  getSupportFragmentManager();
+        fragmentManager = getSupportFragmentManager();
         if (findViewById(R.id.FragmentContainer) != null) {
             if (savedInstanceState != null) {
                 return;
@@ -28,5 +29,10 @@ public class MainActivity extends AppCompatActivity {
                     .commit();
         }
 
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }
