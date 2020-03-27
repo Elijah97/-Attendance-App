@@ -1,12 +1,9 @@
 package app.ellie.assignment;
 
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentTransaction;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,20 +14,28 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentTransaction;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static app.ellie.assignment.MainActivity.fragmentManager;
 
 
 public class SaveFragment extends Fragment implements AdapterView.OnItemSelectedListener {
+    public static final int REQUEST_CODE = 13;
+    public static final int RESULT_CODE = 15;
+    public static String SCAN_RESULT = "";
     private final String EMAIL_PATTERN = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
     DatabaseHelper mydb;
-    EditText sName, password, email, deleteText, id;
-    private Button button, save, viewBtn, deleteBtn;
+    EditText sName, password, email, id;
+    private Button button, save, viewBtn, deleteBtn, scanbtn;
     private Spinner spinner1, spinner2;
     private DatabaseHelper db;
     private boolean isValid = true;
+    private boolean disabled = true;
 
 
     @Override
@@ -46,15 +51,21 @@ public class SaveFragment extends Fragment implements AdapterView.OnItemSelected
         button = view.findViewById(R.id.save);
         viewBtn = view.findViewById(R.id.readBtn);
         deleteBtn = view.findViewById(R.id.deleteBtn);
+        scanbtn = view.findViewById(R.id.scanbtn);
+        scanbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(new Intent(getActivity().getApplicationContext(), QrScannerActivity.class), REQUEST_CODE);
+            }
+        });
         ReadData();
 
         sName = view.findViewById(R.id.name);
         id = view.findViewById(R.id.id);
         password = view.findViewById(R.id.password);
         email = view.findViewById(R.id.email);
-        deleteText = view.findViewById(R.id.idNum);
         db = new DatabaseHelper(getContext());
-
+        disableViews();
 
         DeleteData();
 
@@ -96,7 +107,12 @@ public class SaveFragment extends Fragment implements AdapterView.OnItemSelected
         final String name = sName.getText().toString();
         final String password = this.password.getText().toString();
         final String email = this.email.getText().toString();
+        final String id = this.id.getText().toString();
 
+        if (id.trim().isEmpty()) {
+            this.id.setError("Please add the student id");
+            isValid = false;
+        }
         if (name.trim().isEmpty()) {
             sName.setError("Name should not be empty");
             isValid = false;
@@ -112,33 +128,34 @@ public class SaveFragment extends Fragment implements AdapterView.OnItemSelected
         }
 
         if (!isValid) return;
-
-        //SAVE IN THE DATABASE
-        if (id.getText().toString().isEmpty()) {
-            if (db.insertData(name, password, email) != -1) {
-                FragmentTransaction ft = fragmentManager.beginTransaction();
-                SuccessFragment fragment = new SuccessFragment();
-                final Bundle args = new Bundle();
-                args.putString(SuccessFragment.NAME_PARAM, name);
-                args.putString(SuccessFragment.EMAIL_PARAM, email);
-                args.putString(SuccessFragment.PASSWORD_PARAM, password);
-                fragment.setArguments(args);
-                ft.replace(R.id.FragmentContainer, fragment, null)
-                        .addToBackStack(null)
-                        .commit();
-                Toast.makeText(getContext(), "saved successfully", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(getContext(), "they was an issue", Toast.LENGTH_SHORT).show();
-                return;
-            }
-        } else {
-            Integer id = Integer.valueOf(this.id.getText().toString());
-
-            db.updateData(id, name, password, email);
+        if (db.updateData(this.id.getText().toString(), name, password, email) != -1) {
+            FragmentTransaction ft = fragmentManager.beginTransaction();
+            SuccessFragment fragment = new SuccessFragment();
+            final Bundle args = new Bundle();
+            args.putString(SuccessFragment.NAME_PARAM, name);
+            args.putString(SuccessFragment.EMAIL_PARAM, email);
+            args.putString(SuccessFragment.PASSWORD_PARAM, password);
+            fragment.setArguments(args);
+            ft.replace(R.id.FragmentContainer, fragment, null)
+                    .addToBackStack(null)
+                    .commit();
             Toast.makeText(getContext(), "Data updated successfully", Toast.LENGTH_SHORT).show();
+            cleanViews();
+            disabled = true;
+            disableViews();
+        } else {
+            Toast.makeText(getContext(), "they was an issue", Toast.LENGTH_SHORT).show();
+            return;
         }
 
 
+    }
+
+    private void cleanViews() {
+        sName.setText("");
+        id.setText("");
+        password.setText("");
+        email.setText("");
     }
 
     @Override
@@ -161,10 +178,11 @@ public class SaveFragment extends Fragment implements AdapterView.OnItemSelected
                 }
                 StringBuffer sb = new StringBuffer();
                 while (results.moveToNext()) {
-                    sb.append("ReadNo : " + results.getString(0) + "\n");
-                    sb.append("Name : " + results.getString(1) + "\n");
-                    sb.append("Password : " + results.getString(2) + "\n");
-                    sb.append("Email : " + results.getString(3) + "\n\n");
+                    sb.append("ReadNo : " + results.getString(results.getColumnIndex(DatabaseHelper.COL0)) + "\n");
+                    sb.append("Student id: " + results.getString(results.getColumnIndex(DatabaseHelper.COL4)) + "\n");
+                    sb.append("Name : " + results.getString(results.getColumnIndex(DatabaseHelper.COL1)) + "\n");
+                    sb.append("Password : " + results.getString(results.getColumnIndex(DatabaseHelper.COL2)) + "\n");
+                    sb.append("Email : " + results.getString(results.getColumnIndex(DatabaseHelper.COL3)) + "\n\n");
                 }
                 showMessage("Students Record", sb.toString());
             }
@@ -183,11 +201,45 @@ public class SaveFragment extends Fragment implements AdapterView.OnItemSelected
         deleteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Cursor results = mydb.deleteRow(Integer.parseInt(deleteText.getText().toString()));
+                Cursor results = mydb.deleteRow(id.getText().toString());
                 Toast.makeText(getContext(), "Data delete successfully", Toast.LENGTH_SHORT).show();
+                cleanViews();
+                disabled = true;
+                disableViews();
             }
         });
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE && resultCode == RESULT_CODE) {
+            String scanResult = data.getStringExtra(SCAN_RESULT);
+            id.setText(scanResult);
+            getStudentInfo(scanResult);
+        }
+    }
+
+    private void getStudentInfo(String scanResult) {
+        final Map<String, String> student = db.getStudentById(scanResult);
+        if (student != null) {
+            sName.setText(student.get(DatabaseHelper.COL1));
+            password.setText(student.get(DatabaseHelper.COL2));
+            email.setText(student.get(DatabaseHelper.COL3));
+        } else {
+            Toast.makeText(getContext(), "Student does not exists please create him/her", Toast.LENGTH_SHORT).show();
+        }
+        disabled = false;
+        disableViews();
+    }
+
+    private void disableViews() {
+        button.setEnabled(!disabled);
+        deleteBtn.setEnabled(!disabled);
+        sName.setEnabled(!disabled);
+        id.setEnabled(!disabled);
+        password.setEnabled(!disabled);
+        email.setEnabled(!disabled);
+    }
 
 }

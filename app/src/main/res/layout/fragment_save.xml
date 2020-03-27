@@ -15,10 +15,10 @@
             android:id="@+id/save"
             android:layout_width="134dp"
             android:layout_height="50dp"
-            android:layout_marginBottom="24dp"
             android:text="ADD"
-            app:layout_constraintBottom_toTopOf="@+id/idNum"
-            app:layout_constraintStart_toStartOf="@+id/textView3" />
+            app:layout_constraintBottom_toBottomOf="@+id/deleteBtn"
+            app:layout_constraintStart_toStartOf="@+id/textView3"
+            app:layout_constraintTop_toTopOf="@+id/readBtn" />
 
         <EditText
             android:id="@+id/password"
@@ -72,12 +72,10 @@
             android:layout_height="40dp"
             android:layout_marginStart="35dp"
             android:layout_marginTop="32dp"
-            android:layout_marginEnd="35dp"
             android:layout_marginBottom="32dp"
             android:ems="10"
             android:inputType="textPersonName"
             app:layout_constraintBottom_toTopOf="@+id/name"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
@@ -166,17 +164,6 @@
             app:layout_constraintBottom_toTopOf="@+id/deleteBtn"
             app:layout_constraintEnd_toEndOf="parent" />
 
-        <EditText
-
-            android:id="@+id/idNum"
-            android:layout_width="191dp"
-            android:layout_height="37dp"
-            android:layout_marginStart="32dp"
-            android:hint="Type the ID"
-            android:inputType="numberSigned"
-            app:layout_constraintBaseline_toBaselineOf="@+id/deleteBtn"
-            app:layout_constraintStart_toStartOf="parent" />
-
         <Button
             android:id="@+id/deleteBtn"
             android:layout_width="132dp"
@@ -186,6 +173,17 @@
             android:text="Delete"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent" />
+
+        <Button
+            android:id="@+id/scanbtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="35dp"
+            android:text="Scan the card"
+            app:layout_constraintBottom_toBottomOf="@+id/id"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/id"
+            app:layout_constraintVertical_bias="0.0" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
